@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>א.ג נגררים</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="מערכת ניהול ותיעוד לנגררים - א.ג נגררים">
+    <meta name="theme-color" content="#eb3349">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="א.ג נגררים">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; touch-action: manipulation; background: #f5f5f5; }
+        input, textarea { font-size: 16px !important; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
+        .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .input { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 12px; margin-bottom: 12px; }
+        .input:focus { outline: none; border-color: #667eea; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .title { font-size: 24px; font-weight: bold; color: #333; }
+        .back-btn { background: #f0f0f0; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
+        .logout-btn { background: #ff5252; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .category { background: #f8f9fa; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+        .category-header { padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer; display: flex; justify-content: space-between; }
+        .category-content { padding: 16px; }
+        .item { display: flex; align-items: center; gap: 12px; padding: 12px; background: white; border-radius: 8px; margin-bottom: 8px; }
+        .qty-input { width: 60px; padding: 8px; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 16px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .menu-item { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; margin-bottom: 16px; }
+        .user-info { background: #e8f5e9; color: #2e7d32; padding: 8px 16px; border-radius: 8px; font-size: 14px; display: inline-block; }
+        .error-msg { background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin-bottom: 12px; text-align: center; }
+        .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-width: 400px; width: 100%; }
+        .counter { display: flex; align-items: center; gap: 8px; }
+        .counter-btn { width: 40px; height: 40px; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer; }
+        .counter-btn.minus { background: #ff5252; color: white; }
+        .counter-btn.plus { background: #4caf50; color: white; }
+        textarea { resize: vertical; min-height: 80px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        
+        const WHATSAPP = '972545500180';
+        const REPAIR_TRELLO = 'user63386408+hy3ks08zacthtdktpfjz@boards.trello.com';
+        
+        const USERS_DB = {
+            'teicher': { password: 'AT123456', name: 'Teicher' },
+            'odelya': { password: 'od123456', name: 'Odelya' },
+            'omri': { password: 'om123456', name: 'Omri' },
+            'shadi': { password: 'sh123456', name: 'Shadi' },
+            'user260': { password: 'us123456', name: 'User 260' },
+            'user749': { password: 'us123456', name: 'User 749' },
+            'user869': { password: 'us123456', name: 'User 869' },
+            'user408': { password: 'us123456', name: 'User 408' },
+            'asad': { password: 'as123456', name: 'Asad' }
+        };
+
+        const TRELLO_USERS = [
+            { id: 'odelya17', name: 'Odelya' },
+            { id: 'omrisadi', name: 'Omri' },
+            { id: 'shadihamad', name: 'Shadi' },
+            { id: 'user63161260', name: 'User 260' },
+            { id: 'user83099749', name: 'User 749' },
+            { id: 'user48274869', name: 'User 869' },
+            { id: 'user63386408', name: 'User 408' },
+            { id: 'asadahmad20', name: 'Asad' }
+        ];
+
+        function App() {
+            const [loggedUser, setLoggedUser] = useState(() => {
+                try { return localStorage.getItem('user') || null; } catch { return null; }
+            });
+            const [screen, setScreen] = useState('menu');
+            const [email, setEmail] = useState(() => {
+                try { return localStorage.getItem('email') || ''; } catch { return ''; }
+            });
+
+            const saveEmail = (val) => {
+                setEmail(val);
+                try { localStorage.setItem('email', val); } catch {}
+            };
+
+            const logout = () => {
+                try { localStorage.removeItem('user'); } catch {}
+                setLoggedUser(null);
+                setScreen('menu');
+            };
+
+            if (!loggedUser) return <Login setUser={setLoggedUser} />;
+
+            const userName = USERS_DB[loggedUser]?.name || loggedUser;
+
+            if (screen === 'menu') return <Menu setScreen={setScreen} userName={userName} logout={logout} />;
+            if (screen === 'repair') return <Repair setScreen={setScreen} userName={userName} logout={logout} />;
+            if (screen === 'order') return <Order setScreen={setScreen} email={email} saveEmail={saveEmail} userName={userName} logout={logout} />;
+            if (screen === 'inventory') return <Inventory setScreen={setScreen} email={email} saveEmail={saveEmail} userName={userName} logout={logout} />;
+        }
+
+        function Login({ setUser }) {
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+
+            const handleLogin = () => {
+                if (!username || !password) {
+                    setError('נא למלא שם משתמש וסיסמה');
+                    return;
+                }
+                const user = USERS_DB[username.toLowerCase()];
+                if (user && user.password === password) {
+                    try { localStorage.setItem('user', username.toLowerCase()); } catch {}
+                    setUser(username.toLowerCase());
+                } else {
+                    setError('שם משתמש או סיסמה שגויים');
+                }
+            };
+
+            return (
+                <div className="login-container">
+                    <div className="login-card">
+                        <div style={{textAlign: 'center', marginBottom: 30}}>
+                            <div style={{width: 100, height: 100, background: 'linear-gradient(135deg, #eb3349, #f45c43)', borderRadius: '50%', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, color: 'white', fontWeight: 'bold'}}>א.ג</div>
+                            <h1 style={{fontSize: 28, marginBottom: 8}}>א.ג נגררים</h1>
+                            <p style={{color: '#666'}}>התחברות למערכת</p>
+                        </div>
+                        {error && <div className="error-msg">{error}</div>}
+                        <input className="input" type="text" placeholder="שם משתמש" value={username} onChange={e => setUsername(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
+                        <input className="input" type="password" placeholder="סיסמה" value={password} onChange={e => setPassword(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
+                        <button className="btn btn-primary" onClick={handleLogin}>התחבר</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function Menu({ setScreen, userName, logout }) {
+            return (
+                <div className="container">
+                    <div style={{textAlign: 'center', padding: '40px 0'}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20}}>
+                            <div className="user-info">👤 {userName}</div>
+                            <button className="logout-btn" onClick={logout}>התנתק</button>
+                        </div>
+                        <div style={{width: 100, height: 100, background: 'linear-gradient(135deg, #eb3349, #f45c43)', borderRadius: '50%', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, color: 'white', fontWeight: 'bold'}}>א.ג</div>
+                        <h1 style={{fontSize: 32, marginBottom: 8}}>א.ג נגררים</h1>
+                        <p style={{color: '#666'}}>מערכת ניהול ותיעוד</p>
+                    </div>
+                    <div className="menu-item" onClick={() => setScreen('repair')}>
+                        <div style={{fontSize: 48}}>🔧</div>
+                        <div style={{fontSize: 20, fontWeight: 'bold', marginTop: 12}}>כרטיס תיקון</div>
+                        <div style={{fontSize: 14, color: '#666'}}>דוח תיקון מפורט</div>
+                    </div>
+                    <div className="menu-item" onClick={() => setScreen('order')}>
+                        <div style={{fontSize: 48}}>📦</div>
+                        <div style={{fontSize: 20, fontWeight: 'bold', marginTop: 12}}>הזמנת ציוד</div>
+                        <div style={{fontSize: 14, color: '#666'}}>ברגים, נעליים, חשמל</div>
+                    </div>
+                    <div className="menu-item" onClick={() => setScreen('inventory')}>
+                        <div style={{fontSize: 48}}>📋</div>
+                        <div style={{fontSize: 20, fontWeight: 'bold', marginTop: 12}}>ספירת מלאי</div>
+                        <div style={{fontSize: 14, color: '#666'}}>ספירת נגררים</div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Repair({ setScreen, userName, logout }) {
+            const [name, setName] = useState('');
+            const [phone, setPhone] = useState('');
+            const [trailer, setTrailer] = useState('');
+            const [notes, setNotes] = useState('');
+            const [users, setUsers] = useState({});
+            const [expanded, setExpanded] = useState({});
+            const [items, setItems] = useState({});
+
+            const categories = {
+                'אביזרים': ['לוחות זוהרים', 'מחזיר אור מרובע', 'משולשים', 'ידית נעילה גדול', 'ידית נעילה קטן', 'כנף לגרור 1 סרן', 'כנף לגרור 2 סרנים', 'שרשרת + שאקלים', 'כננת קטנה', 'רצועת קשירה', 'הכנה והעברת טסט', 'פס קישרה', 'טבעת שקועה', 'בוכנה לדלת צד', 'קפיץ לדלת רמפה', 'מסגרות'],
+                'סרן / בלמים': ['כף ריתום 750 ק"ג', 'כף ריתום 2 טון', 'כף ריתום 3.5 טון', 'גרמושקה', 'בוכנה לפושפול', 'פושפול 2000 ק"ג', 'פושפול 3000 ק"ג', 'פושפול 3500 ק"ג', 'סרן 750 ק"ג', 'סרן 1300 ק"ג', 'סרן 1350 ק"ג', 'סרן 1800 ק"ג', 'סרן קראון', 'מיסב', 'חריטת דרמים', 'החלפת בלמים', 'דרם לגרור', 'כבל חרום', 'כבל ברקס'],
+                'רגלי חניה': ['גלגל לרגל', 'רגל חניה קטנה', 'רגל חניה גדולה', 'רגל HD', 'רגל חקלאית', 'תושבת'],
+                'חשמל': ['תקע לנגרר', 'שקע לרכב', 'פאנל אורות', 'פנס צד', 'סט LED עם התקנה', 'סט LED ללא התקנה', 'פנס קומפלט', 'מתאם 13/7', 'ראש חכם', 'תיקון חשמל', 'תקע כולל עבודה'],
+                'צמיגים': ['צמיג 155/13', 'קומפלט 155/13', 'צמיג 165/13', 'קומפלט 165/13', 'צמיג 155/70/12', 'קומפלט 155/70/12', 'צמיג 195/55/10', 'קומפלט 195/55/10', 'צמיג 185/14', 'קומפלט 185/14', 'צמיג 195/14', 'קומפלט 195/14', 'ג\'נט 10"', 'ג\'נט 12"', 'ג\'נט 13"', 'ג\'נט 14"']
+            };
+
+            const sendWhatsApp = () => {
+                if (!name || !phone || !trailer) { alert('נא למלא את כל השדות החובה'); return; }
+                const selectedUsers = Object.keys(users).filter(k => users[k]).map(id => '@' + id).join(' ');
+                let report = 'דוח תיקון נגרר\n\nשם: ' + name + '\nטלפון: ' + phone + '\nנגרר: ' + trailer + '\nנוצר על ידי: ' + userName + '\n';
+                if (selectedUsers) report += '\nמיועד ל: ' + selectedUsers + '\n';
+                report += '\nפריטים:\n';
+                Object.keys(items).forEach(item => { if (items[item] > 0) report += '• ' + item + ' x' + items[item] + '\n'; });
+                if (notes) report += '\nהערות:\n' + notes + '\n';
+                window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(report), '_blank');
+            };
+
+            const sendTrello = () => {
+                if (!name || !phone || !trailer) { alert('נא למלא את כל השדות החובה'); return; }
+                const selectedUsers = Object.keys(users).filter(k => users[k]).map(id => '@' + id).join(' ');
+                let report = 'דוח תיקון נגרר\n\nשם: ' + name + '\nטלפון: ' + phone + '\nנגרר: ' + trailer + '\nנוצר על ידי: ' + userName + '\n';
+                if (selectedUsers) report += '\nמיועד ל: ' + selectedUsers + '\n';
+                report += '\nפריטים:\n';
+                Object.keys(items).forEach(item => { if (items[item] > 0) report += '• ' + item + ' x' + items[item] + '\n'; });
+                if (notes) report += '\nהערות:\n' + notes + '\n';
+                const subject = 'נגרר ' + trailer + ' - ' + name + (selectedUsers ? ' (' + selectedUsers + ')' : '');
+                window.location.href = 'mailto:' + REPAIR_TRELLO + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(report);
+            };
+
+            return (
+                <div className="container">
+                    <div className="card">
+                        <div className="header">
+                            <button className="back-btn" onClick={() => setScreen('menu')}>← חזרה</button>
+                            <div className="title">כרטיס תיקון</div>
+                            <button className="logout-btn" onClick={logout}>התנתק</button>
+                        </div>
+                        <div className="user-info" style={{marginBottom: 12}}>👤 {userName}</div>
+                        <input className="input" type="text" placeholder="שם לקוח *" value={name} onChange={e => setName(e.target.value)} />
+                        <input className="input" type="tel" placeholder="טלפון *" value={phone} onChange={e => setPhone(e.target.value)} />
+                        <input className="input" type="text" placeholder="מספר נגרר *" value={trailer} onChange={e => setTrailer(e.target.value)} />
+                        <div style={{background: '#e3f2fd', padding: 12, borderRadius: 8, marginBottom: 12, fontSize: 14, color: '#1976d2'}}>📧 הדוח ישלח ל-Trello אוטומטית</div>
+                        <div style={{background: '#f8f9fa', padding: 12, borderRadius: 8, marginBottom: 12}}>
+                            <div style={{fontWeight: 'bold', marginBottom: 8}}>תיוג משתמשים:</div>
+                            {TRELLO_USERS.map(u => (
+                                <label key={u.id} style={{display: 'flex', alignItems: 'center', gap: 8, padding: 8}}>
+                                    <input type="checkbox" checked={users[u.id] || false} onChange={e => setUsers({...users, [u.id]: e.target.checked})} />
+                                    <span>{u.name}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <textarea className="input" placeholder="הערות..." value={notes} onChange={e => setNotes(e.target.value)} />
+                    </div>
+                    {Object.keys(categories).map(cat => (
+                        <div key={cat} className="category">
+                            <div className="category-header" onClick={() => setExpanded({...expanded, [cat]: !expanded[cat]})}>
+                                <span style={{fontWeight: 'bold'}}>{cat}</span>
+                                <span>{expanded[cat] ? '▲' : '▼'}</span>
+                            </div>
+                            {expanded[cat] && (
+                                <div className="category-content">
+                                    {categories[cat].map(item => (
+                                        <div key={item} className="item">
+                                            <input type="checkbox" checked={(items[item] || 0) > 0} onChange={e => setItems({...items, [item]: e.target.checked ? 1 : 0})} style={{width: 20, height: 20}} />
+                                            <span style={{flex: 1}}>{item}</span>
+                                            {(items[item] || 0) > 0 && <input className="qty-input" type="number" min="1" value={items[item]} onChange={e => setItems({...items, [item]: parseInt(e.target.value) || 1})} />}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    <div className="footer">
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, maxWidth: '600px', margin: '0 auto'}}>
+                            <button className="btn" style={{background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', color: 'white'}} onClick={sendWhatsApp}>📱 שלח לוואטסאפ</button>
+                            <button className="btn btn-primary" onClick={sendTrello}>📧 שלח ל-Trello</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Order({ setScreen, email, saveEmail, userName, logout }) {
+            const [name, setName] = useState('');
+            const [phone, setPhone] = useState('');
+            const [notes, setNotes] = useState('');
+            const [users, setUsers] = useState({});
+            const [custom, setCustom] = useState('');
+            const [customItems, setCustomItems] = useState([]);
+
+            const sendWhatsApp = () => {
+                if (!name || !phone) { alert('נא למלא שם וטלפון'); return; }
+                const selectedUsers = Object.keys(users).filter(k => users[k]).map(id => '@' + id).join(' ');
+                let report = 'הזמנת ציוד\n\nשם: ' + name + '\nטלפון: ' + phone + '\nנוצר על ידי: ' + userName + '\n';
+                if (selectedUsers) report += '\nמיועד ל: ' + selectedUsers + '\n';
+                if (customItems.length > 0) { report += '\nפריטים:\n'; customItems.forEach(item => report += '• ' + item + '\n'); }
+                if (notes) report += '\nהערות:\n' + notes + '\n';
+                window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(report), '_blank');
+            };
+
+            const sendTrello = () => {
+                if (!name || !phone || !email) { alert('נא למלא את כל השדות החובה'); return; }
+                const selectedUsers = Object.keys(users).filter(k => users[k]).map(id => '@' + id).join(' ');
+                let report = 'הזמנת ציוד\n\nשם: ' + name + '\nטלפון: ' + phone + '\nנוצר על ידי: ' + userName + '\n';
+                if (selectedUsers) report += '\nמיועד ל: ' + selectedUsers + '\n';
+                if (customItems.length > 0) { report += '\nפריטים:\n'; customItems.forEach(item => report += '• ' + item + '\n'); }
+                if (notes) report += '\nהערות:\n' + notes + '\n';
+                const subject = 'הזמנת ציוד - ' + name + (selectedUsers ? ' (' + selectedUsers + ')' : '');
+                window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(report);
+            };
+
+            return (
+                <div className="container">
+                    <div className="card">
+                        <div className="header">
+                            <button className="back-btn" onClick={() => setScreen('menu')}>← חזרה</button>
+                            <div className="title">הזמנת ציוד</div>
+                            <button className="logout-btn" onClick={logout}>התנתק</button>
+                        </div>
+                        <div className="user-info" style={{marginBottom: 12}}>👤 {userName}</div>
+                        <input className="input" type="text" placeholder="שם *" value={name} onChange={e => setName(e.target.value)} />
+                        <input className="input" type="tel" placeholder="טלפון *" value={phone} onChange={e => setPhone(e.target.value)} />
+                        <input className="input" type="email" placeholder="מייל Trello *" value={email} onChange={e => saveEmail(e.target.value)} />
+                        <div style={{background: '#f8f9fa', padding: 12, borderRadius: 8, marginBottom: 12}}>
+                            <div style={{fontWeight: 'bold', marginBottom: 8}}>תיוג משתמשים:</div>
+                            {TRELLO_USERS.map(u => (
+                                <label key={u.id} style={{display: 'flex', alignItems: 'center', gap: 8, padding: 8}}>
+                                    <input type="checkbox" checked={users[u.id] || false} onChange={e => setUsers({...users, [u.id]: e.target.checked})} />
+                                    <span>{u.name}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <div style={{display: 'flex', gap: 8, marginBottom: 12}}>
+                            <input className="input" style={{marginBottom: 0}} type="text" placeholder="הוסף פריט..." value={custom} onChange={e => setCustom(e.target.value)} onKeyPress={e => e.key === 'Enter' && custom.trim() && (setCustomItems([...customItems, custom.trim()]), setCustom(''))} />
+                            <button className="btn btn-success" style={{width: 100}} onClick={() => custom.trim() && (setCustomItems([...customItems, custom.trim()]), setCustom(''))}>הוסף</button>
+                        </div>
+                        {customItems.length > 0 && (
+                            <div style={{background: '#f8f9fa', padding: 12, borderRadius: 8, marginBottom: 12}}>
+                                <div style={{fontWeight: 'bold', marginBottom: 8}}>פריטים:</div>
+                                {customItems.map((item, i) => (
+                                    <div key={i} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 8, background: 'white', borderRadius: 8, marginBottom: 4}}>
+                                        <span>{item}</span>
+                                        <button style={{background: '#ff5252', color: 'white', border: 'none', padding: '4px 12px', borderRadius: 6, cursor: 'pointer'}} onClick={() => setCustomItems(customItems.filter((_, idx) => idx !== i))}>✕</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <textarea className="input" placeholder="הערות..." value={notes} onChange={e => setNotes(e.target.value)} />
+                    </div>
+                    <div className="footer">
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, maxWidth: '600px', margin: '0 auto'}}>
+                            <button className="btn" style={{background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', color: 'white'}} onClick={sendWhatsApp}>📱 שלח לוואטסאפ</button>
+                            <button className="btn btn-success" onClick={sendTrello}>📧 שלח ל-Trello</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Inventory({ setScreen, email, saveEmail, userName, logout }) {
+            const [notes, setNotes] = useState('');
+            const [users, setUsers] = useState({});
+            const [counts, setCounts] = useState({});
+            const trailers = ['נגרר פתוח YG501', 'נגרר פתוח YG601', 'נגרר פתוח YG751', 'נגרר פתוח YG951', 'נגרר פתוח YG1101', 'נגרר פתוח YG1201', 'נגרר סגור YG601', 'נגרר סגור YG751', 'נגרר סגור YG951', 'נגרר 2 סרנים YG1302', 'נגרר 2 סרנים YG1502', 'נגרר 2 סרנים YG2002', 'נגרר בובקט YG2550', 'נגרר בובקט YG3002', 'נגרר גנרטור YG2302G', 'נגרר מים YG1351W', 'נגרר דלק YG601F', 'נגרר שירותים YG2900WC'];
+            const total = Object.values(counts).reduce((sum, val) => sum + (val || 0), 0);
+
+            const sendWhatsApp = () => {
+                const selectedUsers = Object.keys(users).filter(k => users[k]).map(id => '@' + id).join(' ');
+                let report = 'ספירת מלאי\n\nתאריך: ' + new Date().toLocaleDateString('he-IL') + '\nנספר על ידי: ' + userName + '\n';
+                if (selectedUsers) report += '\nמיועד ל: ' + selectedUsers + '\n';
+                report += '\nנגררים:\n';
+                trailers.forEach(t => { if (counts[t] > 0) report += '• ' + t + ': ' + counts[t] + '\n'; });
+                report += '\nסה"כ: ' + total + ' נגררים\n';
+                if (notes) report += '\nהערות:\n' + notes + '\n';
+                window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(report), '_blank');
+            };
+
+            const sendTrello = () => {
+                if (!email) { alert('נא למלא מייל Trello'); return; }
+                const selectedUsers = Object.keys(users).filter(k => users[k]).map(id => '@' + id).join(' ');
+                let report = 'ספירת מלאי\n\nתאריך: ' + new Date().toLocaleDateString('he-IL') + '\nנספר על ידי: ' + userName + '\n';
+                if (selectedUsers) report += '\nמיועד ל: ' + selectedUsers + '\n';
+                report += '\nנגררים:\n';
+                trailers.forEach(t => { if (counts[t] > 0) report += '• ' + t + ': ' + counts[t] + '\n'; });
+                report += '\nסה"כ: ' + total + ' נגררים\n';
+                if (notes) report += '\nהערות:\n' + notes + '\n';
+                const subject = 'ספירת מלאי - ' + new Date().toLocaleDateString('he-IL') + (selectedUsers ? ' (' + selectedUsers + ')' : '');
+                window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(report);
+            };
+
+            return (
+                <div className="container">
+                    <div className="card">
+                        <div className="header">
+                            <button className="back-btn" onClick={() => setScreen('menu')}>← חזרה</button>
+                            <div className="title">ספירת מלאי</div>
+                            <button className="logout-btn" onClick={logout}>התנתק</button>
+                        </div>
+                        <div className="user-info" style={{marginBottom: 12}}>👤 {userName}</div>
+                        <input className="input" type="email" placeholder="מייל Trello *" value={email} onChange={e => saveEmail(e.target.value)} />
+                        <div style={{background: '#f8f9fa', padding: 12, borderRadius: 8, marginBottom: 12}}>
+                            <div style={{fontWeight: 'bold', marginBottom: 8}}>תיוג משתמשים:</div>
+                            {TRELLO_USERS.map(u => (
+                                <label key={u.id} style={{display: 'flex', alignItems: 'center', gap: 8, padding: 8}}>
+                                    <input type="checkbox" checked={users[u.id] || false} onChange={e => setUsers({...users, [u.id]: e.target.checked})} />
+                                    <span>{u.name}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <div style={{background: '#9c27b0', color: 'white', padding: 16, borderRadius: 12, textAlign: 'center', marginBottom: 16}}>
+                            <div style={{fontSize: 32, fontWeight: 'bold'}}>{total}</div>
+                            <div>סה"כ נגררים</div>
+                        </div>
+                        <textarea className="input" placeholder="הערות..." value={notes} onChange={e => setNotes(e.target.value)} />
+                    </div>
+                    {trailers.map(t => (
+                        <div key={t} className="card" style={{padding: 16}}>
+                            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                                <span style={{flex: 1, fontSize: 14}}>{t}</span>
+                                <div className="counter">
+                                    <button className="counter-btn minus" onClick={() => setCounts({...counts, [t]: Math.max(0, (counts[t] || 0) - 1)})}>−</button>
+                                    <div style={{width: 60, textAlign: 'center', fontSize: 18, fontWeight: 'bold'}}>{counts[t] || 0}</div>
+                                    <button className="counter-btn plus" onClick={() => setCounts({...counts, [t]: (counts[t] || 0) + 1})}>+</button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    <div className="footer">
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, maxWidth: '600px', margin: '0 auto'}}>
+                            <button className="btn" style={{background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', color: 'white'}} onClick={sendWhatsApp}>📱 שלח לוואטסאפ</button>
+                            <button className="btn btn-danger" onClick={sendTrello}>📧 שלח ל-Trello</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => console.log('SW registered:', registration))
+                    .catch(error => console.log('SW registration failed:', error));
+            });
+        }
+    </script>
+</body>
+</html>
